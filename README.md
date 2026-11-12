@@ -2,8 +2,8 @@
 
 > **The Ultra-Fast, Remote-First & Open-Source IPTV Player for Android TV, Android Mobile & Windows**
 
-[![Build Android APK](https://github.com/YOUR_USERNAME/veloxtv/actions/workflows/build-android.yml/badge.svg)](https://github.com/YOUR_USERNAME/veloxtv/actions)
-[![Build Windows Release](https://github.com/YOUR_USERNAME/veloxtv/actions/workflows/build-windows.yml/badge.svg)](https://github.com/YOUR_USERNAME/veloxtv/actions)
+[![Build Android APK](https://github.com/meshkatmonghate/veloxtv/actions/workflows/build-android.yml/badge.svg)](https://github.com/meshkatmonghate/veloxtv/actions)
+[![Build Windows Release](https://github.com/meshkatmonghate/veloxtv/actions/workflows/build-windows.yml/badge.svg)](https://github.com/meshkatmonghate/veloxtv/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Android%20TV%20%7C%20Android%20%7C%20Windows-brightgreen.svg)](#)
 
