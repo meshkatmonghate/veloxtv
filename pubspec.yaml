@@ -1,0 +1,42 @@
+name: veloxtv
+description: "VeloxTV — The Ultra-Fast, Remote-First & Open-Source IPTV Player for Android TV & Desktop"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Media Player (libmpv - hardware accelerated, plays all IPTV codecs)
+  media_kit: ^1.1.10
+  media_kit_video: ^1.2.4
+  media_kit_libs_video: ^1.5.0
+  
+  # Network & Protocols
+  http: ^1.2.0
+  dio: ^5.4.0
+  
+  # State Management & Storage
+  provider: ^6.1.1
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.2
+  crypto: ^3.0.3
+  intl: ^0.19.0
+  
+  # UI & Remote / Icons
+  flutter_animate: ^4.5.0
+  cached_network_image: ^3.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
