@@ -24,10 +24,10 @@ class Category {
       };
 
   factory Category.fromJson(Map<String, dynamic> json) => Category(
-        id: json['id'] ?? '',
-        name: json['name'] ?? '',
-        isHidden: json['isHidden'] ?? false,
-        isLocked: json['isLocked'] ?? false,
+        id: json['id']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        isHidden: json['isHidden'] == true,
+        isLocked: json['isLocked'] == true,
         streamType: StreamType.values.firstWhere(
           (e) => e.name == json['streamType'],
           orElse: () => StreamType.live,
@@ -80,17 +80,21 @@ class ChannelItem {
       };
 
   factory ChannelItem.fromJson(Map<String, dynamic> json) => ChannelItem(
-        id: json['id'] ?? '',
-        num: json['num'],
-        name: json['name'] ?? 'Unknown',
-        streamId: json['streamId'],
-        streamIcon: json['streamIcon'],
-        epgChannelId: json['epgChannelId'],
-        categoryId: json['categoryId'] ?? '0',
-        categoryName: json['categoryName'],
-        streamUrl: json['streamUrl'] ?? '',
-        isFavorite: json['isFavorite'] ?? false,
-        isLocked: json['isLocked'] ?? false,
+        id: json['id']?.toString() ?? '',
+        num: json['num'] is num
+            ? (json['num'] as num).toInt()
+            : int.tryParse(json['num']?.toString() ?? ''),
+        name: json['name']?.toString() ?? 'Unknown',
+        streamId: json['streamId'] is num
+            ? (json['streamId'] as num).toInt()
+            : int.tryParse(json['streamId']?.toString() ?? ''),
+        streamIcon: json['streamIcon']?.toString(),
+        epgChannelId: json['epgChannelId']?.toString(),
+        categoryId: json['categoryId']?.toString() ?? '0',
+        categoryName: json['categoryName']?.toString(),
+        streamUrl: json['streamUrl']?.toString() ?? '',
+        isFavorite: json['isFavorite'] == true,
+        isLocked: json['isLocked'] == true,
         streamType: StreamType.values.firstWhere(
           (e) => e.name == json['streamType'],
           orElse: () => StreamType.live,
@@ -140,16 +144,24 @@ class VodItem {
       };
 
   factory VodItem.fromJson(Map<String, dynamic> json) => VodItem(
-        streamId: json['streamId'] ?? 0,
-        name: json['name'] ?? '',
-        streamIcon: json['streamIcon'],
-        rating: (json['rating'] as num?)?.toDouble(),
-        categoryId: json['categoryId'] ?? '0',
-        containerExtension: json['containerExtension'] ?? 'mp4',
-        streamUrl: json['streamUrl'] ?? '',
-        resumePositionMs: json['resumePositionMs'] ?? 0,
-        durationMs: json['durationMs'] ?? 0,
-        isFavorite: json['isFavorite'] ?? false,
+        streamId: json['streamId'] is num
+            ? (json['streamId'] as num).toInt()
+            : int.tryParse(json['streamId']?.toString() ?? '0') ?? 0,
+        name: json['name']?.toString() ?? '',
+        streamIcon: json['streamIcon']?.toString(),
+        rating: json['rating'] is num
+            ? (json['rating'] as num).toDouble()
+            : double.tryParse(json['rating']?.toString() ?? ''),
+        categoryId: json['categoryId']?.toString() ?? '0',
+        containerExtension: json['containerExtension']?.toString() ?? 'mp4',
+        streamUrl: json['streamUrl']?.toString() ?? '',
+        resumePositionMs: json['resumePositionMs'] is num
+            ? (json['resumePositionMs'] as num).toInt()
+            : int.tryParse(json['resumePositionMs']?.toString() ?? '0') ?? 0,
+        durationMs: json['durationMs'] is num
+            ? (json['durationMs'] as num).toInt()
+            : int.tryParse(json['durationMs']?.toString() ?? '0') ?? 0,
+        isFavorite: json['isFavorite'] == true,
       );
 }
 
@@ -224,7 +236,7 @@ class XtreamAccount {
         serverUrl: json['serverUrl'] ?? '',
         username: json['username'] ?? '',
         password: json['password'] ?? '',
-        expireDate: json['expireDate'],
-        status: json['status'],
+        expireDate: json['expireDate']?.toString(),
+        status: json['status']?.toString(),
       );
 }
