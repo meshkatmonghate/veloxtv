@@ -37,8 +37,15 @@ jobs:
           cp -r android/app/src/main/* /tmp/velox_backup/
           flutter create . --platforms=android --org=com.veloxtv
           cp -r /tmp/velox_backup/* android/app/src/main/
+          
+          # Ensure minSdk is 21 for media_kit
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' android/app/build.gradle || true
           sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle || true
-          sed -i 's/minSdk = flutter.minSdk/minSdk = 21/g' android/app/build.gradle || true
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
+
+          # Inject AGP 8 namespace fallback for subprojects
+          echo "" >> android/build.gradle
+          echo "subprojects { afterEvaluate { project -> if (project.hasProperty('android') && project.android.namespace == null) { project.android.namespace = project.group } } }" >> android/build.gradle
 
       - name: Get Dependencies
         run: flutter pub get
