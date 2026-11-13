@@ -5,6 +5,13 @@ import '../models/models.dart';
 class XtreamService {
   XtreamAccount? _currentAccount;
 
+  // Standard IPTV headers to prevent server-side 512 / 503 / 403 blocks
+  static const Map<String, String> defaultHeaders = {
+    'User-Agent': 'IPTVSmartersPro/3.1.5.1 (Linux; Android 12; Mobile)',
+    'Accept': '*/*',
+    'Connection': 'keep-alive',
+  };
+
   void setAccount(XtreamAccount account) {
     _currentAccount = account;
   }
@@ -36,6 +43,32 @@ class XtreamService {
     return null;
   }
 
+  Future<http.Response> _getWithRetry(Uri url, {int retries = 2}) async {
+    for (var i = 0; i <= retries; i++) {
+      try {
+        final res = await http.get(url, headers: defaultHeaders).timeout(const Duration(seconds: 15));
+        if (res.statusCode == 200) {
+          return res;
+        }
+
+        // Error 512, 502, 503: Server overload or rate-limit retry
+        if (res.statusCode == 512 || res.statusCode == 503 || res.statusCode == 502) {
+          if (i < retries) {
+            await Future.delayed(Duration(milliseconds: 1000 * (i + 1)));
+            continue;
+          }
+          throw Exception('IPTV Server is currently busy or rate-limiting (Error ${res.statusCode}). Please try again in a few moments.');
+        }
+
+        return res;
+      } catch (e) {
+        if (i == retries) rethrow;
+        await Future.delayed(Duration(milliseconds: 1000 * (i + 1)));
+      }
+    }
+    throw Exception('Failed to connect to IPTV server');
+  }
+
   Future<XtreamAccount> authenticate({
     required String serverUrl,
     required String username,
@@ -44,7 +77,7 @@ class XtreamService {
     final base = _cleanUrl(serverUrl);
     final url = Uri.parse('$base/player_api.php?username=$username&password=$password');
 
-    final response = await http.get(url).timeout(const Duration(seconds: 15));
+    final response = await _getWithRetry(url);
     if (response.statusCode != 200) {
       throw Exception('Server returned HTTP ${response.statusCode}');
     }
@@ -78,7 +111,7 @@ class XtreamService {
       final url = Uri.parse(
           '${_currentAccount!.serverUrl}/player_api.php?username=${_currentAccount!.username}&password=${_currentAccount!.password}&action=get_live_categories');
 
-      final response = await http.get(url).timeout(const Duration(seconds: 15));
+      final response = await _getWithRetry(url);
       if (response.statusCode != 200 || response.body.isEmpty) return [];
 
       final decoded = jsonDecode(response.body);
@@ -105,7 +138,7 @@ class XtreamService {
         urlStr += '&category_id=$categoryId';
       }
 
-      final response = await http.get(Uri.parse(urlStr)).timeout(const Duration(seconds: 20));
+      final response = await _getWithRetry(Uri.parse(urlStr));
       if (response.statusCode != 200 || response.body.isEmpty) return [];
 
       final decoded = jsonDecode(response.body);
@@ -139,7 +172,7 @@ class XtreamService {
       final url = Uri.parse(
           '${_currentAccount!.serverUrl}/player_api.php?username=${_currentAccount!.username}&password=${_currentAccount!.password}&action=get_vod_categories');
 
-      final response = await http.get(url).timeout(const Duration(seconds: 15));
+      final response = await _getWithRetry(url);
       if (response.statusCode != 200 || response.body.isEmpty) return [];
 
       final decoded = jsonDecode(response.body);
@@ -166,7 +199,7 @@ class XtreamService {
         urlStr += '&category_id=$categoryId';
       }
 
-      final response = await http.get(Uri.parse(urlStr)).timeout(const Duration(seconds: 20));
+      final response = await _getWithRetry(Uri.parse(urlStr));
       if (response.statusCode != 200 || response.body.isEmpty) return [];
 
       final decoded = jsonDecode(response.body);

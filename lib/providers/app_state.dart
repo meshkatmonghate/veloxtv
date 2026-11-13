@@ -26,6 +26,10 @@ class AppState extends ChangeNotifier {
   List<Category> _vodCategories = [];
   List<VodItem> _vodMovies = [];
 
+  // Memory caches for on-demand loading (prevents server 512 overload)
+  final Map<String, List<ChannelItem>> _categoryChannelCache = {};
+  final Map<String, List<VodItem>> _categoryVodCache = {};
+
   String? _selectedLiveCategoryId;
   String? _selectedVodCategoryId;
   String _searchQuery = '';
@@ -95,11 +99,54 @@ class AppState extends ChangeNotifier {
   void selectLiveCategory(String? categoryId) {
     _selectedLiveCategoryId = categoryId;
     notifyListeners();
+    loadChannelsForCategory(categoryId);
   }
 
   void selectVodCategory(String? categoryId) {
     _selectedVodCategoryId = categoryId;
     notifyListeners();
+    loadMoviesForCategory(categoryId);
+  }
+
+  Future<void> loadChannelsForCategory(String? categoryId) async {
+    if (categoryId == null) return;
+    if (_categoryChannelCache.containsKey(categoryId)) {
+      _channels = _categoryChannelCache[categoryId]!;
+      notifyListeners();
+      return;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final channels = await xtreamService.fetchLiveStreams(
+        categoryId: categoryId == 'all' ? null : categoryId,
+      );
+      _categoryChannelCache[categoryId] = channels;
+      _channels = channels;
+    } catch (_) {}
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadMoviesForCategory(String? categoryId) async {
+    if (categoryId == null) return;
+    if (_categoryVodCache.containsKey(categoryId)) {
+      _vodMovies = _categoryVodCache[categoryId]!;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final movies = await xtreamService.fetchVodStreams(
+        categoryId: categoryId == 'all' ? null : categoryId,
+      );
+      _categoryVodCache[categoryId] = movies;
+      _vodMovies = movies;
+      notifyListeners();
+    } catch (_) {}
   }
 
   // Xtream Codes Login
@@ -156,15 +203,18 @@ class AppState extends ChangeNotifier {
 
   Future<void> loadXtreamData() async {
     _liveCategories = await xtreamService.fetchLiveCategories();
-    _channels = await xtreamService.fetchLiveStreams();
     _vodCategories = await xtreamService.fetchVodCategories();
-    _vodMovies = await xtreamService.fetchVodStreams();
 
     if (_liveCategories.isNotEmpty) {
       _selectedLiveCategoryId = _liveCategories.first.id;
+      await loadChannelsForCategory(_selectedLiveCategoryId);
+    } else {
+      _channels = await xtreamService.fetchLiveStreams();
     }
+
     if (_vodCategories.isNotEmpty) {
       _selectedVodCategoryId = _vodCategories.first.id;
+      await loadMoviesForCategory(_selectedVodCategoryId);
     }
     notifyListeners();
   }
