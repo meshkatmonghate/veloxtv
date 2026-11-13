@@ -7,6 +7,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     name: Build Android APK
@@ -27,6 +30,12 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: Scaffold Android build harness
+        run: |
+          cp android/app/src/main/AndroidManifest.xml /tmp/AndroidManifest.xml.bak
+          flutter create . --platforms=android --org=com.veloxtv
+          cp /tmp/AndroidManifest.xml.bak android/app/src/main/AndroidManifest.xml
 
       - name: Get Dependencies
         run: flutter pub get

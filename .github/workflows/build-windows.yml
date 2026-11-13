@@ -7,6 +7,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     name: Build Windows Executable
@@ -24,6 +27,9 @@ jobs:
 
       - name: Enable Windows Desktop
         run: flutter config --enable-windows-desktop
+
+      - name: Scaffold Windows build harness
+        run: flutter create . --platforms=windows --org=com.veloxtv
 
       - name: Get Dependencies
         run: flutter pub get
