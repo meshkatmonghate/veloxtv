@@ -81,13 +81,9 @@ class ChannelItem {
 
   factory ChannelItem.fromJson(Map<String, dynamic> json) => ChannelItem(
         id: json['id']?.toString() ?? '',
-        num: json['num'] is num
-            ? (json['num'] as num).toInt()
-            : int.tryParse(json['num']?.toString() ?? ''),
+        num: int.tryParse(json['num']?.toString() ?? ''),
         name: json['name']?.toString() ?? 'Unknown',
-        streamId: json['streamId'] is num
-            ? (json['streamId'] as num).toInt()
-            : int.tryParse(json['streamId']?.toString() ?? ''),
+        streamId: int.tryParse(json['streamId']?.toString() ?? ''),
         streamIcon: json['streamIcon']?.toString(),
         epgChannelId: json['epgChannelId']?.toString(),
         categoryId: json['categoryId']?.toString() ?? '0',
@@ -144,23 +140,15 @@ class VodItem {
       };
 
   factory VodItem.fromJson(Map<String, dynamic> json) => VodItem(
-        streamId: json['streamId'] is num
-            ? (json['streamId'] as num).toInt()
-            : int.tryParse(json['streamId']?.toString() ?? '0') ?? 0,
+        streamId: int.tryParse(json['streamId']?.toString() ?? '0') ?? 0,
         name: json['name']?.toString() ?? '',
         streamIcon: json['streamIcon']?.toString(),
-        rating: json['rating'] is num
-            ? (json['rating'] as num).toDouble()
-            : double.tryParse(json['rating']?.toString() ?? ''),
+        rating: double.tryParse(json['rating']?.toString() ?? ''),
         categoryId: json['categoryId']?.toString() ?? '0',
         containerExtension: json['containerExtension']?.toString() ?? 'mp4',
         streamUrl: json['streamUrl']?.toString() ?? '',
-        resumePositionMs: json['resumePositionMs'] is num
-            ? (json['resumePositionMs'] as num).toInt()
-            : int.tryParse(json['resumePositionMs']?.toString() ?? '0') ?? 0,
-        durationMs: json['durationMs'] is num
-            ? (json['durationMs'] as num).toInt()
-            : int.tryParse(json['durationMs']?.toString() ?? '0') ?? 0,
+        resumePositionMs: int.tryParse(json['resumePositionMs']?.toString() ?? '0') ?? 0,
+        durationMs: int.tryParse(json['durationMs']?.toString() ?? '0') ?? 0,
         isFavorite: json['isFavorite'] == true,
       );
 }

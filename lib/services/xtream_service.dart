@@ -31,16 +31,13 @@ class XtreamService {
 
   double? _parseDouble(dynamic val) {
     if (val == null) return null;
-    if (val is num) return val.toDouble();
-    if (val is String) return double.tryParse(val);
-    return null;
+    return double.tryParse(val.toString());
   }
 
   int? _parseInt(dynamic val) {
     if (val == null) return null;
-    if (val is num) return val.toInt();
-    if (val is String) return int.tryParse(val);
-    return null;
+    if (val is double) return val.toInt();
+    return int.tryParse(val.toString());
   }
 
   Future<http.Response> _getWithRetry(Uri url, {int retries = 2}) async {
