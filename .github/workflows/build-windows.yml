@@ -28,8 +28,16 @@ jobs:
       - name: Enable Windows Desktop
         run: flutter config --enable-windows-desktop
 
-      - name: Scaffold Windows build harness
-        run: flutter create . --platforms=windows --org=com.veloxtv
+      - name: Scaffold Windows build harness & Apply Custom Icon
+        shell: powershell
+        run: |
+          if (Test-Path "windows\runner\resources\app_icon.ico") {
+            Copy-Item "windows\runner\resources\app_icon.ico" "app_icon.ico.bak"
+          }
+          flutter create . --platforms=windows --org=com.veloxtv
+          if (Test-Path "app_icon.ico.bak") {
+            Copy-Item "app_icon.ico.bak" "windows\runner\resources\app_icon.ico" -Force
+          }
 
       - name: Get Dependencies
         run: flutter pub get
