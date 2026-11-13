@@ -37,6 +37,7 @@ jobs:
           cp -r android/app/src/main/* /tmp/velox_backup/
           flutter create . --platforms=android --org=com.veloxtv
           cp -r /tmp/velox_backup/* android/app/src/main/
+          chmod +x android/gradlew
           
           # Ensure minSdk is 21 for media_kit
           sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' android/app/build.gradle || true
@@ -47,6 +48,39 @@ jobs:
           echo "" >> android/build.gradle
           echo "subprojects { afterEvaluate { project -> if (project.hasProperty('android') && project.android.namespace == null) { project.android.namespace = project.group } } }" >> android/build.gradle
 
+      - name: Generate Release Keystore and Configure Signing
+        run: |
+          keytool -genkey -v -keystore android/app/upload.keystore -alias velox \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass veloxtv123 -keypass veloxtv123 \
+            -dname "CN=VeloxTV, OU=App, O=Velox, L=City, S=State, C=US"
+          
+          python3 -c "
+          with open('android/app/build.gradle', 'r') as f:
+              content = f.read()
+
+          signing_block = '''
+              signingConfigs {
+                  release {
+                      storeFile file('upload.keystore')
+                      storePassword 'veloxtv123'
+                      keyAlias 'velox'
+                      keyPassword 'veloxtv123'
+                  }
+              }
+          '''
+          
+          if 'signingConfigs {' not in content:
+              content = content.replace('buildTypes {', signing_block + '\n    buildTypes {')
+          
+          content = content.replace('signingConfig = signingConfigs.debug', 'signingConfig = signingConfigs.release')
+          content = content.replace('signingConfig signingConfigs.debug', 'signingConfig signingConfigs.release')
+          
+          with open('android/app/build.gradle', 'w') as f:
+              f.write(content)
+          "
+          cat android/app/build.gradle | grep -A 10 "signingConfigs" || true
+
       - name: Pre-cache libmpv native binaries
         run: |
           mkdir -p build/media_kit_libs_android_video/v1.1.7
@@ -54,28 +88,28 @@ jobs:
             echo "Fetching default-${arch}.jar..."
             curl -f -s -L --retry 5 -A "Mozilla/5.0" \
               -o "build/media_kit_libs_android_video/v1.1.7/default-${arch}.jar" \
-              "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.7/default-${arch}.jar"
+              "https://github.com/media-kit/libmpv-android-video-build/releases/download/v1.1.7/default-${arch}.jar" || true
           done
-          ls -lh build/media_kit_libs_android_video/v1.1.7/
 
       - name: Get Dependencies
         run: flutter pub get
 
       - name: Build Android Release APK
         run: |
-          flutter build apk --release || (cd android && ./gradlew assembleRelease)
+          flutter build apk --release --verbose || (cd android && ./gradlew assembleRelease --stacktrace)
 
       - name: Stage Release APK
         run: |
           mkdir -p release_apk/
           echo "Locating built APK files:"
-          find build/ -name "*.apk"
+          find build/ -name "*.apk" -ls || true
           APK_FILE=$(find build/ -name "*release*.apk" | head -n 1)
           if [ -z "$APK_FILE" ]; then
             APK_FILE=$(find build/ -name "*.apk" | head -n 1)
           fi
-          echo "Selecting: $APK_FILE"
+          echo "Selected APK: $APK_FILE"
           cp "$APK_FILE" release_apk/VeloxTV-Android.apk
+          ls -lh release_apk/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
