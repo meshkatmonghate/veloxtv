@@ -33,9 +33,12 @@ jobs:
 
       - name: Scaffold Android build harness
         run: |
-          cp android/app/src/main/AndroidManifest.xml /tmp/AndroidManifest.xml.bak
+          mkdir -p /tmp/velox_backup
+          cp -r android/app/src/main/* /tmp/velox_backup/
           flutter create . --platforms=android --org=com.veloxtv
-          cp /tmp/AndroidManifest.xml.bak android/app/src/main/AndroidManifest.xml
+          cp -r /tmp/velox_backup/* android/app/src/main/
+          sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle || true
+          sed -i 's/minSdk = flutter.minSdk/minSdk = 21/g' android/app/build.gradle || true
 
       - name: Get Dependencies
         run: flutter pub get
