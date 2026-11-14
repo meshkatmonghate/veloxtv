@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -31,32 +31,63 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Ensure Android local.properties
+      - name: Scaffold Android Harness & Apply Custom TV Assets
         run: |
+          # 1. Back up custom TV AndroidManifest.xml and launcher icons & banners
+          mkdir -p /tmp/android_backup
+          cp android/app/src/main/AndroidManifest.xml /tmp/android_backup/
+          cp -r android/app/src/main/res /tmp/android_backup/
+
+          # 2. Re-create clean android platform harness matching the runner's Flutter version
+          rm -rf android/
+          flutter create . --platforms=android --org=com.veloxtv
+
+          # 3. Restore custom TV AndroidManifest and custom icons/banners
+          cp /tmp/android_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+          cp -r /tmp/android_backup/res/* android/app/src/main/res/
+
+          # 4. Make sure gradlew is executable
+          chmod +x android/gradlew
+
+          # 5. Ensure release signing config uses debug keys so the APK is installable out-of-the-box
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's/signingConfig = signingConfigs.release/signingConfig = signingConfigs.debug/g' android/app/build.gradle
+          fi
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i 's/signingConfig = signingConfigs.getByName("release")/signingConfig = signingConfigs.getByName("debug")/g' android/app/build.gradle.kts
+          fi
+
+          # 6. Set local.properties with Flutter SDK path
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          cat android/local.properties
 
       - name: Get Dependencies
         run: flutter pub get
 
       - name: Build Android Release APK
-        run: flutter build apk --release --android-skip-build-dependency-validation
+        run: |
+          flutter build apk --release --android-skip-build-dependency-validation || {
+            echo "Flutter build tool encountered an issue, falling back to direct Gradle assembleRelease..."
+            cd android
+            ./gradlew assembleRelease --no-daemon
+            cd ..
+          }
 
       - name: Stage Release APK
         run: |
           mkdir -p release_apk/
-          echo "Searching for built APKs:"
-          find build/ -name "*.apk" -ls || true
-          APK_FILE=$(find build/ -name "*release*.apk" 2>/dev/null | head -n 1)
+          echo "Searching for built APKs across workspace:"
+          find build/ -name "*.apk" -ls 2>/dev/null || true
+          find android/ -name "*.apk" -ls 2>/dev/null || true
+          APK_FILE=$(find . -name "*release*.apk" 2>/dev/null | head -n 1)
           if [ -z "$APK_FILE" ]; then
-            APK_FILE=$(find build/ -name "*.apk" 2>/dev/null | head -n 1)
+            APK_FILE=$(find . -name "*.apk" 2>/dev/null | head -n 1)
           fi
           if [ -n "$APK_FILE" ]; then
             echo "Selected APK: $APK_FILE"
             cp "$APK_FILE" release_apk/VeloxTV-Android.apk
             ls -lh release_apk/
           else
-            echo "No APK found in build directory!"
+            echo "No APK found in workspace!"
             exit 1
           fi
 
