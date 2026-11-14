@@ -31,28 +31,36 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Ensure Android local.properties
+        run: |
+          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+          cat android/local.properties
+
       - name: Get Dependencies
         run: flutter pub get
 
       - name: Build Android Release APK
-        run: flutter build apk --release --verbose
+        run: flutter build apk --release
 
       - name: Stage Release APK
-        if: always()
         run: |
           mkdir -p release_apk/
           echo "Searching for built APKs:"
-          find . -name "*.apk" -ls || true
-          APK_FILE=$(find . -name "*release*.apk" | head -n 1)
+          find build/ -name "*.apk" -ls || true
+          APK_FILE=$(find build/ -name "*release*.apk" 2>/dev/null | head -n 1)
           if [ -z "$APK_FILE" ]; then
-            APK_FILE=$(find . -name "*.apk" | head -n 1)
+            APK_FILE=$(find build/ -name "*.apk" 2>/dev/null | head -n 1)
           fi
-          echo "Selected APK: $APK_FILE"
-          cp "$APK_FILE" release_apk/VeloxTV-Android.apk
-          ls -lh release_apk/
+          if [ -n "$APK_FILE" ]; then
+            echo "Selected APK: $APK_FILE"
+            cp "$APK_FILE" release_apk/VeloxTV-Android.apk
+            ls -lh release_apk/
+          else
+            echo "No APK found in build directory!"
+            exit 1
+          fi
 
       - name: Upload APK Artifact
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: VeloxTV-Android-Release
