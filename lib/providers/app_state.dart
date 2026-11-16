@@ -4,6 +4,7 @@ import '../services/storage_service.dart';
 import '../services/xtream_service.dart';
 import '../services/m3u_service.dart';
 import '../services/recording_service.dart';
+import '../services/tv_home_channel_service.dart';
 
 class AppState extends ChangeNotifier {
   final StorageService storageService;
@@ -224,6 +225,7 @@ class AppState extends ChangeNotifier {
     await storageService.toggleFavorite(channel.id);
     channel.isFavorite = !channel.isFavorite;
     notifyListeners();
+    TvHomeChannelService.syncFavorites(favoriteChannels);
   }
 
   // Category Hide/Unhide

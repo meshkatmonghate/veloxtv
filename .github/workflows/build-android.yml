@@ -33,24 +33,36 @@ jobs:
 
       - name: Scaffold Android Harness & Apply Custom TV Assets
         run: |
-          # 1. Back up custom TV AndroidManifest.xml and launcher icons & banners
+          # 1. Back up custom TV AndroidManifest.xml, icons/banners, and Kotlin TV channel manager
           mkdir -p /tmp/android_backup
           cp android/app/src/main/AndroidManifest.xml /tmp/android_backup/
           cp -r android/app/src/main/res /tmp/android_backup/
+          cp -r android/app/src/main/kotlin /tmp/android_backup/
 
           # 2. Re-create clean android platform harness matching the runner's Flutter version
           rm -rf android/
           flutter create . --platforms=android --org=com.veloxtv
 
-          # 3. Restore custom TV AndroidManifest and custom icons/banners
+          # 3. Restore custom TV AndroidManifest, icons/banners, and Kotlin files
           cp /tmp/android_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
           cp -r /tmp/android_backup/res/* android/app/src/main/res/
+          cp -r /tmp/android_backup/kotlin/* android/app/src/main/kotlin/
           rm -f android/app/src/main/res/drawable/tv_banner.xml
 
           # 4. Make sure gradlew is executable
           chmod +x android/gradlew
 
-          # 5. Ensure release signing config uses debug keys so the APK is installable out-of-the-box
+          # 5. Add Android TV Home Screen Channel Jetpack library dependency
+          if [ -f android/app/build.gradle ]; then
+            echo "" >> android/app/build.gradle
+            echo "dependencies { implementation 'androidx.tvprovider:tvprovider:1.0.0' }" >> android/app/build.gradle
+          fi
+          if [ -f android/app/build.gradle.kts ]; then
+            echo "" >> android/app/build.gradle.kts
+            echo "dependencies { implementation(\"androidx.tvprovider:tvprovider:1.0.0\") }" >> android/app/build.gradle.kts
+          fi
+
+          # 6. Ensure release signing config uses debug keys so the APK is installable out-of-the-box
           if [ -f android/app/build.gradle ]; then
             sed -i 's/signingConfig = signingConfigs.release/signingConfig = signingConfigs.debug/g' android/app/build.gradle
           fi
@@ -58,7 +70,7 @@ jobs:
             sed -i 's/signingConfig = signingConfigs.getByName("release")/signingConfig = signingConfigs.getByName("debug")/g' android/app/build.gradle.kts
           fi
 
-          # 6. Set local.properties with Flutter SDK path
+          # 7. Set local.properties with Flutter SDK path
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
       - name: Get Dependencies

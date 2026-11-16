@@ -114,19 +114,19 @@ public class TvBannerGenerator
             }
 
             // 3. Typography on the Right
-            float textStartX = 132f;
-            float titleY = 56f;
+            float textStartX = 124f;
+            float titleY = 48f;
 
-            using (Font titleFont = new Font("Segoe UI", 27f, FontStyle.Bold, GraphicsUnit.Pixel))
-            using (Font subFont = new Font("Segoe UI", 11.5f, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (Font titleFont = new Font("Segoe UI", 32f, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (Font subFont = new Font("Segoe UI", 12f, FontStyle.Bold, GraphicsUnit.Pixel))
             {
                 SizeF veloxSize = g.MeasureString("Velox", titleFont);
 
                 // Title Drop Shadow
-                using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(210, 0, 0, 0)))
+                using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(220, 0, 0, 0)))
                 {
                     g.DrawString("Velox", titleFont, shadowBrush, textStartX + 2, titleY + 2);
-                    g.DrawString("TV", titleFont, shadowBrush, textStartX + veloxSize.Width - 7 + 2, titleY + 2);
+                    g.DrawString("TV", titleFont, shadowBrush, textStartX + veloxSize.Width - 9 + 2, titleY + 2);
                 }
 
                 // Title: "Velox" in White, "TV" in Neon Cyan
@@ -134,7 +134,7 @@ public class TvBannerGenerator
                 using (SolidBrush cyanBrush = new SolidBrush(Color.FromArgb(255, 0, 229, 255)))
                 {
                     g.DrawString("Velox", titleFont, whiteBrush, textStartX, titleY);
-                    g.DrawString("TV", titleFont, cyanBrush, textStartX + veloxSize.Width - 7, titleY);
+                    g.DrawString("TV", titleFont, cyanBrush, textStartX + veloxSize.Width - 9, titleY);
                 }
 
                 // Subtitle: "NEXT-GEN IPTV PLAYER"
@@ -147,9 +147,9 @@ public class TvBannerGenerator
                 }
 
                 // Cyan accent glow underline
-                using (Pen linePen = new Pen(Color.FromArgb(160, 0, 229, 255), 1.8f))
+                using (Pen linePen = new Pen(Color.FromArgb(180, 0, 229, 255), 2f))
                 {
-                    g.DrawLine(linePen, textStartX, subY + 19, textStartX + 148, subY + 19);
+                    g.DrawLine(linePen, textStartX, subY + 20, textStartX + 155, subY + 20);
                 }
             }
 

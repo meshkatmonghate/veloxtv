@@ -187,7 +187,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
 
     if (server.isEmpty || user.isEmpty || pass.isEmpty) {
       setState(() {
-        _validationError = 'لطفاً تمام فیلدها (آدرس سرور، نام کاربری و رمز عبور) را وارد کنید.';
+        _validationError = 'Please fill in all fields (Server URL, Username, and Password).';
       });
       return;
     }
@@ -215,7 +215,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
 
     if (url.isEmpty) {
       setState(() {
-        _validationError = 'لطفاً آدرس لینک لیست M3U را وارد کنید.';
+        _validationError = 'Please enter an M3U playlist URL.';
       });
       return;
     }
@@ -354,7 +354,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     _buildTextField(
                       controller: _serverController,
                       focusNode: _serverFocus,
-                      label: 'Server URL (آدرس سرور)',
+                      label: 'Server URL',
                       hint: 'http://example.com:8080',
                       icon: Icons.dns_rounded,
                       textInputAction: TextInputAction.next,
@@ -364,7 +364,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     _buildTextField(
                       controller: _usernameController,
                       focusNode: _usernameFocus,
-                      label: 'Username (نام کاربری)',
+                      label: 'Username',
                       hint: 'Enter your username',
                       icon: Icons.person_rounded,
                       textInputAction: TextInputAction.next,
@@ -374,7 +374,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     _buildTextField(
                       controller: _passwordController,
                       focusNode: _passwordFocus,
-                      label: 'Password (رمز عبور)',
+                      label: 'Password',
                       hint: 'Enter your password',
                       icon: Icons.lock_rounded,
                       obscureText: true,

@@ -8,6 +8,7 @@ import '../tv/tv_focusable.dart';
 import 'live_player_screen.dart';
 import 'parental_pin_dialog.dart';
 import 'account_setup_screen.dart';
+import '../services/tv_home_channel_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +20,30 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   TvNavDestination _currentDestination = TvNavDestination.liveTv;
   final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    TvHomeChannelService.setChannelSelectedListener((channelId) {
+      _playChannelById(channelId);
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final initialId = await TvHomeChannelService.getInitialChannelId();
+      if (initialId != null && initialId.isNotEmpty) {
+        _playChannelById(initialId);
+      }
+    });
+  }
+
+  void _playChannelById(String channelId) {
+    final appState = context.read<AppState>();
+    try {
+      final ch = appState.filteredChannels.firstWhere((c) => c.id == channelId);
+      _onChannelTap(ch);
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -205,45 +230,54 @@ class _HomeScreenState extends State<HomeScreen> {
     final categories = appState.visibleLiveCategories;
     final channels = appState.filteredChannels;
 
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Category horizontal scroll row
+        // 1. Left Vertical Categories Sidebar (TV Accessibility)
         if (categories.isNotEmpty)
           Container(
-            height: 48,
-            margin: const EdgeInsets.symmetric(vertical: 12),
+            width: 250,
+            decoration: BoxDecoration(
+              color: const Color(0xFF141824),
+              border: Border(right: BorderSide(color: Colors.white.withOpacity(0.06))),
+            ),
             child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
               itemCount: categories.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   final isSelected = appState.selectedLiveCategoryId == 'all' ||
                       appState.selectedLiveCategoryId == null;
-                  return _buildCategoryChip('All Channels', isSelected, () {
-                    appState.selectLiveCategory('all');
-                  });
+                  return _buildVerticalCategoryItem(
+                    title: 'All Channels',
+                    icon: Icons.grid_view_rounded,
+                    isSelected: isSelected,
+                    onSelect: () => appState.selectLiveCategory('all'),
+                  );
                 }
                 final cat = categories[index - 1];
                 final isSelected = appState.selectedLiveCategoryId == cat.id;
-                return _buildCategoryChip(cat.name, isSelected, () {
-                  appState.selectLiveCategory(cat.id);
-                });
+                return _buildVerticalCategoryItem(
+                  title: cat.name,
+                  icon: Icons.folder_rounded,
+                  isSelected: isSelected,
+                  onSelect: () => appState.selectLiveCategory(cat.id),
+                );
               },
             ),
           ),
 
-        // Channel Grid
+        // 2. Right Channels Grid
         Expanded(
           child: channels.isEmpty
               ? _buildEmptyPlaceholder('No channels found in this category')
               : GridView.builder(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(20),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1.8,
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 1.85,
                   ),
                   itemCount: channels.length,
                   itemBuilder: (context, index) {
@@ -262,6 +296,52 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _buildVerticalCategoryItem({
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onSelect,
+  }) {
+    return TvFocusable(
+      onSelect: onSelect,
+      borderRadius: BorderRadius.circular(10),
+      scaleFactor: 1.02,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF00E5FF).withOpacity(0.18) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: isSelected ? Border.all(color: const Color(0xFF00E5FF), width: 1.5) : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? const Color(0xFF00E5FF) : Colors.white60,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: isSelected ? const Color(0xFF00E5FF) : Colors.white70,
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (isSelected)
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFF00E5FF), size: 18),
+          ],
+        ),
+      ),
     );
   }
 
