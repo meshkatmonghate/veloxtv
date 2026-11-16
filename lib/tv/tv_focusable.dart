@@ -95,6 +95,7 @@ class _TvFocusableState extends State<TvFocusable> with SingleTickerProviderStat
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.select ||
           event.logicalKey == LogicalKeyboardKey.enter ||
+          event.logicalKey == LogicalKeyboardKey.numpadEnter ||
           event.logicalKey == LogicalKeyboardKey.space ||
           event.logicalKey == LogicalKeyboardKey.gameButtonA) {
         widget.onSelect?.call();
@@ -112,10 +113,16 @@ class _TvFocusableState extends State<TvFocusable> with SingleTickerProviderStat
       focusNode: _node,
       autofocus: widget.autoFocus,
       onKeyEvent: _handleKeyEvent,
-      child: GestureDetector(
-        onTap: widget.onSelect,
-        onLongPress: widget.onLongPress,
-        child: AnimatedBuilder(
+      child: MouseRegion(
+        cursor: widget.onSelect != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            _node.requestFocus();
+            widget.onSelect?.call();
+          },
+          onLongPress: widget.onLongPress,
+          child: AnimatedBuilder(
           animation: _scaleAnimation,
           builder: (context, child) {
             return Transform.scale(
@@ -145,6 +152,7 @@ class _TvFocusableState extends State<TvFocusable> with SingleTickerProviderStat
           },
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
