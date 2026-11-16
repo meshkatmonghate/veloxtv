@@ -45,6 +45,7 @@ jobs:
           # 3. Restore custom TV AndroidManifest and custom icons/banners
           cp /tmp/android_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
           cp -r /tmp/android_backup/res/* android/app/src/main/res/
+          rm -f android/app/src/main/res/drawable/tv_banner.xml
 
           # 4. Make sure gradlew is executable
           chmod +x android/gradlew
