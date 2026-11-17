@@ -120,7 +120,7 @@ class MainActivity: FlutterActivity() {
                     put(TvContract.PreviewPrograms.COLUMN_CHANNEL_ID, targetChannelId)
                     put(TvContract.PreviewPrograms.COLUMN_TYPE, TvContract.PreviewPrograms.TYPE_CLIP)
                     put(TvContract.PreviewPrograms.COLUMN_TITLE, name)
-                    put(TvContract.PreviewPrograms.COLUMN_DESCRIPTION, category)
+                    put(TvContract.PreviewPrograms.COLUMN_SHORT_DESCRIPTION, category)
                     put(TvContract.PreviewPrograms.COLUMN_INTERNAL_PROVIDER_ID, id)
                     put(TvContract.PreviewPrograms.COLUMN_INTENT_URI, "veloxtv://channel/$id")
                     if (icon.isNotEmpty()) {

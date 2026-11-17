@@ -27,7 +27,6 @@ Most existing IPTV clients on the market fall into two extremes:
 * **🛡️ Real Parental Control:**
   * 4-digit PIN security dialog.
   * SHA-256 hashed password storage.
-  * Automatic detection and locking for adult categories (`XXX`, `18+`, `Adult`, `Porn`).
 * **👁️ Category & Privacy Manager:**
   * Bulk **Hide / Unhide** unwanted channel bouquets and foreign languages.
   * Lock specific categories behind PIN codes.
