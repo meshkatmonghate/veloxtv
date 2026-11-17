@@ -1,14 +1,13 @@
 package com.veloxtv.veloxtv
 
-import android.content.Context
+import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Intent
+import android.database.Cursor
+import android.media.tv.TvContract
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.NonNull
-import androidx.tvprovider.media.tv.PreviewChannel
-import androidx.tvprovider.media.tv.PreviewChannelHelper
-import androidx.tvprovider.media.tv.PreviewProgram
-import androidx.tvprovider.media.tv.TvContractCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -58,65 +57,82 @@ class MainActivity: FlutterActivity() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
         try {
-            val channelHelper = PreviewChannelHelper(this)
-            val existingChannels = channelHelper.allChannels
-            var myChannel = existingChannels.find { it.displayName == "VeloxTV Favorites" }
+            val resolver = contentResolver
 
-            val targetChannelId: Long
-            if (myChannel == null) {
-                val newChannel = PreviewChannel.Builder()
-                    .setType(TvContractCompat.Channels.TYPE_PREVIEW)
-                    .setDisplayName("VeloxTV Favorites")
-                    .setDescription("Your favorite IPTV channels")
-                    .setAppLinkIntentUri(Uri.parse("veloxtv://home"))
-                    .build()
-                val publishedUri = channelHelper.publishChannel(newChannel)
-                targetChannelId = TvContractCompat.parseChannelId(publishedUri)
-                if (targetChannelId != -1L) {
-                    TvContractCompat.requestChannelBrowsable(this, targetChannelId)
+            // 1. Check if "VeloxTV Favorites" channel already exists
+            var targetChannelId: Long = -1L
+            val projection = arrayOf(TvContract.Channels._ID, TvContract.Channels.COLUMN_DISPLAY_NAME)
+            val cursor: Cursor? = resolver.query(
+                TvContract.Channels.CONTENT_URI,
+                projection,
+                null,
+                null,
+                null
+            )
+
+            cursor?.use {
+                val idIndex = it.getColumnIndex(TvContract.Channels._ID)
+                val nameIndex = it.getColumnIndex(TvContract.Channels.COLUMN_DISPLAY_NAME)
+                while (it.moveToNext()) {
+                    val name = if (nameIndex >= 0) it.getString(nameIndex) else null
+                    if (name == "VeloxTV Favorites") {
+                        targetChannelId = if (idIndex >= 0) it.getLong(idIndex) else -1L
+                        break
+                    }
                 }
-            } else {
-                targetChannelId = myChannel.id
+            }
+
+            // 2. Create channel if not found
+            if (targetChannelId == -1L) {
+                val channelValues = ContentValues().apply {
+                    put(TvContract.Channels.COLUMN_TYPE, TvContract.Channels.TYPE_PREVIEW)
+                    put(TvContract.Channels.COLUMN_DISPLAY_NAME, "VeloxTV Favorites")
+                    put(TvContract.Channels.COLUMN_DESCRIPTION, "Your favorite IPTV channels")
+                    put(TvContract.Channels.COLUMN_APP_LINK_INTENT_URI, "veloxtv://home")
+                }
+                val channelUri = resolver.insert(TvContract.Channels.CONTENT_URI, channelValues)
+                if (channelUri != null) {
+                    targetChannelId = ContentUris.parseId(channelUri)
+                    if (targetChannelId != -1L) {
+                        TvContract.requestChannelBrowsable(this, targetChannelId)
+                    }
+                }
             }
 
             if (targetChannelId == -1L) return
 
-            // Remove existing programs in this channel to refresh with latest favorites
-            val existingPrograms = channelHelper.getProgramsForChannel(targetChannelId)
-            for (prog in existingPrograms) {
-                try {
-                    channelHelper.deletePreviewProgram(prog.id)
-                } catch (_: Exception) {}
+            // 3. Clear existing programs for this channel
+            try {
+                val programsUri = TvContract.buildPreviewProgramsUriForChannel(targetChannelId)
+                resolver.delete(programsUri, null, null)
+            } catch (e: Exception) {
+                // Ignore if delete fails
             }
 
-            // Add up to 20 favorite channels as program cards
+            // 4. Insert favorite channels as preview programs (up to 20)
             for (ch in favorites.take(20)) {
                 val id = ch["id"]?.toString() ?: continue
                 val name = ch["name"]?.toString() ?: "Channel"
                 val icon = ch["icon"]?.toString() ?: ""
                 val category = ch["category"]?.toString() ?: "Live TV"
 
-                val launchIntent = Intent(this, MainActivity::class.java).apply {
-                    action = Intent.ACTION_VIEW
-                    data = Uri.parse("veloxtv://channel/$id")
-                    putExtra("launch_channel_id", id)
+                val programValues = ContentValues().apply {
+                    put(TvContract.PreviewPrograms.COLUMN_CHANNEL_ID, targetChannelId)
+                    put(TvContract.PreviewPrograms.COLUMN_TYPE, TvContract.PreviewPrograms.TYPE_CLIP)
+                    put(TvContract.PreviewPrograms.COLUMN_TITLE, name)
+                    put(TvContract.PreviewPrograms.COLUMN_DESCRIPTION, category)
+                    put(TvContract.PreviewPrograms.COLUMN_INTERNAL_PROVIDER_ID, id)
+                    put(TvContract.PreviewPrograms.COLUMN_INTENT_URI, "veloxtv://channel/$id")
+                    if (icon.isNotEmpty()) {
+                        put(TvContract.PreviewPrograms.COLUMN_POSTER_ART_URI, icon)
+                    }
                 }
 
-                val programBuilder = PreviewProgram.Builder()
-                    .setChannelId(targetChannelId)
-                    .setType(TvContractCompat.PreviewPrograms.TYPE_CLIP)
-                    .setTitle(name)
-                    .setDescription(category)
-                    .setInternalProviderId(id)
-                    .setIntent(launchIntent)
-
-                if (icon.isNotEmpty()) {
-                    try {
-                        programBuilder.setPosterArtUri(Uri.parse(icon))
-                    } catch (_: Exception) {}
+                try {
+                    resolver.insert(TvContract.PreviewPrograms.CONTENT_URI, programValues)
+                } catch (e: Exception) {
+                    // Ignore single program insert failure
                 }
-
-                channelHelper.publishPreviewProgram(programBuilder.build())
             }
         } catch (e: Exception) {
             e.printStackTrace()

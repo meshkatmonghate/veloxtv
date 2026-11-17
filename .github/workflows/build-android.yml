@@ -52,17 +52,7 @@ jobs:
           # 4. Make sure gradlew is executable
           chmod +x android/gradlew
 
-          # 5. Add Android TV Home Screen Channel Jetpack library dependency
-          if [ -f android/app/build.gradle ]; then
-            echo "" >> android/app/build.gradle
-            echo "dependencies { implementation 'androidx.tvprovider:tvprovider:1.0.0' }" >> android/app/build.gradle
-          fi
-          if [ -f android/app/build.gradle.kts ]; then
-            echo "" >> android/app/build.gradle.kts
-            echo "dependencies { implementation(\"androidx.tvprovider:tvprovider:1.0.0\") }" >> android/app/build.gradle.kts
-          fi
-
-          # 6. Ensure release signing config uses debug keys so the APK is installable out-of-the-box
+          # 5. Ensure release signing config uses debug keys so the APK is installable out-of-the-box
           if [ -f android/app/build.gradle ]; then
             sed -i 's/signingConfig = signingConfigs.release/signingConfig = signingConfigs.debug/g' android/app/build.gradle
           fi
@@ -70,7 +60,7 @@ jobs:
             sed -i 's/signingConfig = signingConfigs.getByName("release")/signingConfig = signingConfigs.getByName("debug")/g' android/app/build.gradle.kts
           fi
 
-          # 7. Set local.properties with Flutter SDK path
+          # 6. Set local.properties with Flutter SDK path
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
       - name: Get Dependencies
